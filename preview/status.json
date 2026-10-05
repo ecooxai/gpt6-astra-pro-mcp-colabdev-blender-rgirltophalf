@@ -1,9 +1,9 @@
 {
-  "iteration": 4,
-  "quality": 55,
-  "status": "Continuous face succeeded; eye reflections regressed",
-  "updated": "2026-10-05T06:43:46.964487+00:00",
-  "progress": 55,
+  "iteration": 6,
+  "quality": 68,
+  "status": "Fuller hair waves and a more natural upper-body pose",
+  "updated": "2026-10-05T07:11:55.588619+00:00",
+  "progress": 67,
   "history": [
     {
       "iteration": 1,
@@ -31,6 +31,20 @@
       "quality": 55,
       "title": "Continuous face succeeded; eye reflections regressed",
       "notes": "The eye holes and lips share continuous topology, but the new eye curvature washed out the iris reflections. Profile review exposed a receding chin and pointed nose; rear hair has repetitive ridges. This pass is not accepted as an improvement.",
+      "review_method": "Manual visual review of actual Eevee render; subjective, not measured likeness."
+    },
+    {
+      "iteration": 5,
+      "quality": 62,
+      "title": "Eye color and profile recovered; crown transition needs repair",
+      "notes": "Brown irises are restored and the side profile has a more natural chin and shorter nose. Rear hair clears the shirt, but the underlayer exposes a crown seam and close fringe intersects the expanded face. Desktop, mobile, and orbit tests pass.",
+      "review_method": "Manual visual review of actual Eevee render; subjective, not measured likeness."
+    },
+    {
+      "iteration": 6,
+      "quality": 68,
+      "title": "Fuller hair waves and a more natural upper-body pose",
+      "notes": "Wider S-waves, repaired fringe contact, recessed nostrils, fuller lips, and a turned shirt pose move the bust closer to the reference. Remaining: excessive lower-lid volume, geometric collar leaves, and overly sharp hair tips. The result is still stylized, not a photoreal likeness.",
       "review_method": "Manual visual review of actual Eevee render; subjective, not measured likeness."
     }
   ],

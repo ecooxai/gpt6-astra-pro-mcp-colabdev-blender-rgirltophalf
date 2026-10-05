@@ -4,8 +4,8 @@ from face import WIDTH,DEPTH,center_y
 from anatomy import *
 from mathutils.geometry import delaunay_2d_cdt
 
-def in_eye(x,z):
-    return any(eye_coord(x,z,s)[0]<.9999 for s in [-1,1])
+def in_opening(x,z):
+    return any(eye_coord(x,z,s)[0]<.9999 or nostril_coord(x,z,s)<.9999 for s in [-1,1])
 
 def head():
     points=[];edges=[];NZ=221;NT=211;zmin=3.325;zmax=5.885
@@ -30,6 +30,12 @@ def head():
             for k in range(144):
                 x,z=opening(s,2*pi*k/144,dist);th=math.asin(clamp(x/interp(WIDTH,z),-1,1));ring.append(add(th,z))
             edges.extend((ring[k],ring[(k+1)%144]) for k in range(144))
+    for sign in [-1,1]:
+        ring=[]
+        for k in range(64):
+            x,z=nostril_border(sign,2*pi*k/64)
+            ring.append(add(math.asin(x/interp(WIDTH,z)),z))
+        edges.extend((ring[k],ring[(k+1)%64]) for k in range(64))
     # Higher sampling around the nasal alae and vermilion border.
     for j in range(95):
         z=3.59+.64*j/94;w=interp(WIDTH,z)
@@ -42,7 +48,7 @@ def head():
     f=[]
     for face in tri:
         x=sum(v[i][0] for i in face)/len(face);z=sum(v[i][2] for i in face)/len(face)
-        if not in_eye(x,z):f.append(tuple(face))
+        if not in_opening(x,z):f.append(tuple(face))
     # Back hemisphere meets the same outline, preserving genuine side/back anatomy.
     start=len(v);NB=145
     for j in range(NZ):
@@ -69,6 +75,23 @@ def details():
     b=Tubes('Natural closed mouth contact',mat('Lip contact · rose brown','#86534f',.7),5)
     pts=[]
     for k in range(100):
-        x=-.267+.534*k/99;q=x/.274;z=3.747+.003*cos(q*pi)-.005*exp(-(x/.075)**2)
+        x=-.248+.496*k/99;q=x/.252;z=3.747+.003*cos(q*pi)-.005*exp(-(x/.075)**2)
         pts.append((x,front_y(x,z)-.0018,z))
     b.add(pts,.0023,True);b.finish()
+
+    cavity=mat('Nostril interior · warm anatomical recess','#875c4f',.60)
+    attr=cavity.node_tree.nodes.new('ShaderNodeVertexColor');attr.layer_name='Color'
+    cavity.node_tree.links.new(attr.outputs['Color'],cavity.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+    for sign in [-1,1]:
+        v=[];f=[];colors=[];N=64;M=10
+        for j in range(M):
+            t=j/(M-1)
+            for k in range(N):
+                x0,z0=nostril_border(sign,2*pi*k/N)
+                x=sign*.105+(x0-sign*.105)*(1-.92*t);z=3.984+(z0-3.984)*(1-.92*t)
+                y=front_y(x0,z0)+.052*t
+                v.append((x,y,z));colors.append(mix(face_color(x0,front_y(x0,z0),z0),rgba('#613d32'),smooth(t/.65)))
+        for j in range(M-1):
+            for k in range(N):a=j*N+k;b=j*N+(k+1)%N;f.append((a,b,b+N,a+N))
+        f.append(tuple((M-1)*N+k for k in range(N)))
+        mesh('Recessed nostril '+str(sign),v,f,cavity,colors)

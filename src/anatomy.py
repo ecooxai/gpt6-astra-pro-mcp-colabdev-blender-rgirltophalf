@@ -24,25 +24,32 @@ def orbital_y(x,z):
         r,a,dist=eye_coord(x,z,s)
         if 0<=dist<.145:
             t=clamp(dist/.145);ix,iz=opening(s,a);b=smooth(t)
-            yy=(eye_y(ix,iz,s)-.0025)*(1-b)+base*b-.20*t*t*(1-t)*(1-t)
+            yy=(eye_y(ix,iz,s)-.0025)*(1-b)+base*b-.075*t*t*(1-t)*(1-t)
             if sin(a)>0:yy+=.0045*exp(-((t-.41)/.075)**2)*sin(a)**.6
-            else:yy-=.0065*exp(-((t-.33)/.22)**2)*abs(sin(a))
+            else:yy-=.0015*exp(-((t-.33)/.22)**2)*abs(sin(a))
             delta+=yy-base
     return base+delta
 
+def nostril_coord(x,z,s):
+    u=(s*x-.105)/.035;v=(z-3.984-.005*u)/.013
+    return sqrt(u*u+v*v)
+
+def nostril_border(s,a):
+    return s*(.105+.035*cos(a)),3.984+.013*sin(a)+.005*cos(a)
+
 def mouth_info(x,z):
-    q=x/.274
+    q=x/.252
     if abs(q)>=1.08:return 0,0,0,rgba('#c88c89')
     fade=max(0,1-q*q)**.64
     seam=3.747+.003*cos(q*pi)-.005*exp(-(x/.075)**2)
     upper=z>=seam
-    thick=(.057+.022*exp(-((abs(x)-.066)/.050)**2)-.004*exp(-(x/.027)**2))*fade if upper else .080*fade
+    thick=(.062+.018*exp(-((abs(x)-.066)/.050)**2)-.004*exp(-(x/.027)**2))*fade if upper else .098*fade
     t=abs(z-seam)/max(.0001,thick)
     if t>=1.28:return 0,0,0,rgba('#c88c89')
     strength=(1-smooth((t-.87)/.36))*(1-smooth((abs(q)-.88)/.20))
     disp=-(.022*(1-smooth(t))+.022*sin(pi*clamp(t))**1.1)*fade
-    disp+=.0013*sin(x*560+sin(t*14))*sin(pi*clamp(t))**2*fade
-    col=rgba('#b97877') if upper else rgba('#cc908c')
+    disp+=.00045*sin(x*560+sin(t*14))*sin(pi*clamp(t))**2*fade
+    col=rgba('#b87574') if upper else rgba('#cb8b88')
     return disp,strength,t,col
 
 def front_y(x,z):
@@ -62,7 +69,4 @@ def face_color(x,y,z):
             c=mix(c,rgba('#ba887e'),warm)
     disp,strength,t,lipcolor=mouth_info(x,z)
     c=mix(c,lipcolor,strength*.90)
-    for s in [-1,1]:
-        nost=exp(-((x-s*.105)/.029)**2-((z-3.986)/.006)**2)
-        c=mix(c,rgba('#805348'),nost*.35)
     return c

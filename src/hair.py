@@ -3,12 +3,17 @@ from common import *
 
 class HairStudio:
     def __init__(self):
-        self.base=[Tubes('Hair volume · layer '+str(i),m,10) for i,m in enumerate(HAIRS[:3])]
+        self.base=[]
+        for i,m in enumerate(HAIRS[:3]):
+            under=m.copy();under.name='Hair underlayer '+str(i);bs=under.node_tree.nodes.get('Principled BSDF');bs.inputs['Roughness'].default_value=.62;bs.inputs['Specular IOR Level'].default_value=.12;bs.inputs['Anisotropic'].default_value=0;bs.inputs['Coat Weight'].default_value=0
+            self.base.append(Tubes('Hair volume · layer '+str(i),under,10))
         self.fine=[Tubes('Fine hair · render layer '+str(i),m,3,False) for i,m in enumerate(HAIRS)]
         self.web=[Tubes('Hair filaments · web layer '+str(i),m,3,True) for i,m in enumerate(HAIRS)]
+        self.rear_fine=[Tubes('Back hair fibers · render '+str(i),m,3,False) for i,m in enumerate(HAIRS)]
+        self.rear_web=[Tubes('Back hair fibers · web '+str(i),m,3,True) for i,m in enumerate(HAIRS)]
         self.count=0;self.locks=0
-    def strand(self,pts,r=.0014,index=1,web=False):
-        b=self.web[index] if web else self.fine[index];b.add(pts,r,True);self.count+=1
+    def strand(self,pts,r=.0014,index=1,web=False,back=False):
+        b=(self.rear_web[index] if web else self.rear_fine[index]) if back else (self.web[index] if web else self.fine[index]);b.add(pts,r,True);self.count+=1
     def lock(self,controls,width=.075,depth=.04,num=95,layer=1,solid=True):
         pts=spline(controls,56);rr=[]
         for j in range(len(pts)):
@@ -25,42 +30,39 @@ class HairStudio:
                 u.normalize();v=tangent.cross(u).normalized();rad=rr[a]*(1-q)+rr[a+1]*q
                 wave=.004*sin(t*18+phase)*sin(pi*t)+.0015*sin(t*41+phase*.7)
                 p+=u*(rad*c+wave)+v*((rad*depth/width+.0022)*d+.001*sin(t*25+phase))
-                if not solid and p.y<-.38 and 3.65<p.z<5.56:
-                    from face import face_y,WIDTH
-                    if abs(p.x)<interp(WIDTH,p.z)*.96:p.y=face_y(p.x,p.z)-.026-.005*sin(pi*t)
+                if not solid and p.y<-.38 and 3.50<p.z<5.80:
+                    from face import WIDTH
+                    from anatomy import front_y
+                    ratio=abs(p.x)/interp(WIDTH,p.z)
+                    contact=(1-smooth((ratio-.82)/.14))*smooth((5.8-p.z)/.5)*smooth((p.z-3.5)/.25)
+                    p.y=p.y*(1-contact)+(front_y(p.x,p.z)-.045-.006*sin(pi*t))*contact
                 out.append(p)
             color=RNG.choices(range(5),[17,42,29,10,2])[0]
             self.strand(out,RNG.uniform(.00095,.0017),color,k%5==0)
     def finish(self):
-        for b in self.base+self.fine+self.web:b.finish()
+        for b in self.base+self.fine+self.web+self.rear_fine+self.rear_web:b.finish()
         print('HAIR',self.locks,'clumps',self.count,'original strands',flush=True)
 
 def make_hair():
     H=HairStudio();v=[];f=[];N=180;M=70
     for j in range(M):
         for i in range(N):
-            th=2*pi*i/N;end=1.10+1.39*((1-cos(th))/2)**.67;ph=.006+(end-.006)*j/(M-1)
+            th=2*pi*i/N;end=1.083+1.39*((1-cos(th))/2)**.67+.007*sin(th*27);ph=.006+(end-.006)*j/(M-1)
             v.append((.947*sin(ph)*sin(th),.12-.817*sin(ph)*cos(th),4.80+1.274*cos(ph)))
     for j in range(M-1):
         for i in range(N):a=j*N+i;b=j*N+(i+1)%N;f.append((a,b,b+N,a+N))
     scalpmat=mat('Hair scalp · matte root density','#251b1d',.69)
     mesh('Hair scalp · asymmetrical forehead opening',v,[tuple(reversed(q)) for q in f],scalpmat)
-    from hair_volume import back_shell
-    back_shell()
-    for k in range(42):
-        a=1.24+(2*pi-2.48)*(k+.35)/42;sw=sin(a);cw=cos(a);jitter=RNG.uniform(-.07,.07)
-        ph=.30+RNG.uniform(0,.18)
-        root=(.947*sin(ph)*sw,.12-.817*sin(ph)*cw,4.80+1.274*cos(ph))
-        controls=[root,(.77*sw,.12-.66*cw,5.55),(.96*sw,.12-.79*cw,4.88),(1.03*sw,.16-.81*cw,4.06),(1.02*sw,.20-.80*cw,3.32),(1.10*sw+.06*sin(a*5),.17-.72*cw,2.45),(1.17*sw+.09*sin(a*5),.15-.71*cw,1.48),(1.03*sw+.08*sin(a*6),.13-.68*cw,.66+jitter),(.94*sw,.14-.67*cw,.20+RNG.uniform(0,.35))]
-        H.lock(controls,.10,.031,85,0 if k%4==0 else 1,False)
+    from hair_volume import back_shell,back_fibers
+    back_shell();back_fibers(H)
     for k in range(12):
-        t=k/11;dx=(t-.5)*.31;dep=(t-.5)*.115
-        pts=[(.12-.14*t,-.01+.40*t,6.025-.06*t),(-.30-.08*t,-.43+.33*t,5.92-.04*t),(-.69-.09*t,-.58+.30*t,5.48),(-.90+dx*.23,-.24+.14*t,4.91),(-.946+dx*.30,.075+dep,4.38),(-.90+dx*.50,-.02+dep,3.66),(-.98+dx,-.38+dep,2.91),(-1.07+dx,-.64+dep,2.12),(-1.30+dx,-.77+dep,1.30),(-1.30+dx,-.74+dep,.78),(-.98+dx,-.65+dep,.35+.14*t)]
+        t=k/11;dx=(t-.5)*.45;dep=(t-.5)*.115
+        pts=[(.12-.14*t,-.01+.40*t,6.025-.06*t),(-.30-.08*t,-.43+.33*t,5.92-.04*t),(-.69-.09*t,-.58+.30*t,5.48),(-.90+dx*.23,-.24+.14*t,4.91),(-.946+dx*.30,.075+dep,4.38),(-.90+dx*.50,-.02+dep,3.66),(-.98+dx,-.38+dep,2.91),(-1.07+dx,-.64+dep,2.12),(-1.50+dx,-.72+dep,1.40),(-1.56+dx,-.66+dep,.92),(-1.31+dx,-.66+dep,.52),(-.95+dx*.55,-.65+dep,.25+.22*t)]
         pts=[(x+.035*sin(j*1.5+k*.85)*j/10,y+.02*sin(j+k*.7),z+(.13*sin(k*.8) if j>7 else 0)) for j,(x,y,z) in enumerate(pts)]
         H.lock(pts,.084,.030,135,k%3)
     for k in range(16):
-        t=k/15;dx=(t-.5)*.41;dep=(t-.5)*.15
-        pts=[(.15+.10*t,.045+.35*t,6.035-.035*t),(.54+.07*t,-.35+.28*t,5.86),(.84+dx*.35,-.40+dep,5.38),(1.00+dx*.38,-.26+dep,4.81),(.96+dx*.40,-.40+dep,4.08),(.88+dx*.72,-.59+dep,3.36),(.98+dx,-.71+dep,2.60),(1.23+dx,-.82+dep,1.81),(1.39+dx,-.79+dep,1.18),(1.31+dx,-.74+dep,.68),(1.02+dx,-.68+dep,.35+.22*t)]
+        t=k/15;dx=(t-.5)*.45;dep=(t-.5)*.15
+        pts=[(.15+.10*t,.045+.35*t,6.035-.035*t),(.54+.07*t,-.35+.28*t,5.86),(.84+dx*.35,-.40+dep,5.38),(1.00+dx*.38,-.26+dep,4.81),(.96+dx*.40,-.40+dep,4.08),(.88+dx*.72,-.59+dep,3.36),(.98+dx,-.71+dep,2.60),(1.24+dx,-.79+dep,2.00),(1.57+dx,-.72+dep,1.34),(1.49+dx,-.67+dep,.80),(1.17+dx*.70,-.66+dep,.48),(.80+dx*.55,-.66+dep,.24+.20*t)]
         pts=[(x+.048*sin(j*1.5+k*.65)*j/10,y+.025*sin(j*.8+k*.7),z+(.14*sin(k*.8) if j>7 else 0)) for j,(x,y,z) in enumerate(pts)]
         H.lock(pts,.09,.030,140,k%3)
     H.lock([(.10,-.12,6.03),(-.11,-.61,5.63),(-.42,-.745,5.17),(-.63,-.73,4.62),(-.70,-.63,4.12),(-.75,-.47,3.64),(-.62,-.39,3.20)],.026,.012,95,1,False)

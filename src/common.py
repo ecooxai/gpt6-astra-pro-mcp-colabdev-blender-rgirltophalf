@@ -33,12 +33,12 @@ def mat(name,color,rough=.45,metal=0,skin=False,cloth=False):
     p.inputs['Base Color'].default_value=rgba(color); p.inputs['Roughness'].default_value=rough; p.inputs['Metallic'].default_value=metal
     p.inputs['Specular IOR Level'].default_value=.32
     if skin:
-        p.inputs['Subsurface Weight'].default_value=.095; p.inputs['Subsurface Radius'].default_value=(1,.45,.30); p.inputs['Subsurface Scale'].default_value=.12
+        p.inputs['Subsurface Weight'].default_value=.06; p.inputs['Subsurface Radius'].default_value=(1,.45,.30); p.inputs['Subsurface Scale'].default_value=.07
         a=n.new('ShaderNodeVertexColor'); a.layer_name='SkinTone'; l.new(a.outputs['Color'],p.inputs['Base Color'])
         lipmask=n.new('ShaderNodeVertexColor'); lipmask.layer_name='LipMask'
         rough=n.new('ShaderNodeMapRange');rough.inputs['From Min'].default_value=0;rough.inputs['From Max'].default_value=1;rough.inputs['To Min'].default_value=.46;rough.inputs['To Max'].default_value=.33;l.new(lipmask.outputs['Color'],rough.inputs['Value']);l.new(rough.outputs['Result'],p.inputs['Roughness'])
-        tex=n.new('ShaderNodeTexNoise'); tex.inputs['Scale'].default_value=185; tex.inputs['Detail'].default_value=2.5; tex.inputs['Roughness'].default_value=.68
-        bump=n.new('ShaderNodeBump'); bump.inputs['Strength'].default_value=.15; bump.inputs['Distance'].default_value=.006; l.new(tex.outputs['Fac'],bump.inputs['Height']); l.new(bump.outputs['Normal'],p.inputs['Normal'])
+        tex=n.new('ShaderNodeTexNoise'); tex.inputs['Scale'].default_value=650; tex.inputs['Detail'].default_value=2.5; tex.inputs['Roughness'].default_value=.68
+        bump=n.new('ShaderNodeBump'); bump.inputs['Strength'].default_value=.08; bump.inputs['Distance'].default_value=.0018; l.new(tex.outputs['Fac'],bump.inputs['Height']); l.new(bump.outputs['Normal'],p.inputs['Normal'])
     if cloth:
         p.inputs['Sheen Weight'].default_value=.25; p.inputs['Sheen Roughness'].default_value=.7
         tex=n.new('ShaderNodeTexNoise'); tex.inputs['Scale'].default_value=230; tex.inputs['Detail'].default_value=1
@@ -60,7 +60,7 @@ BUTTON=mat('Buttons · warm nacre','#eee9dd',.30)
 HAIRS=[]
 for h in ['#24191a','#302022','#392629','#453033','#503836']:
     m=mat('Hair · chestnut '+h,h,.44)
-    p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Anisotropic'].default_value=.35;p.inputs['Coat Weight'].default_value=.015
+    p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Anisotropic'].default_value=0;p.inputs['Coat Weight'].default_value=0;p.inputs['Specular IOR Level'].default_value=.24
     HAIRS.append(m)
 
 def skin_color(x,y,z):

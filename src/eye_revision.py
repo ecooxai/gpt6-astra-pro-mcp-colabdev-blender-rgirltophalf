@@ -6,7 +6,7 @@ def eyes():
     lashes=Tubes('Individually tapered eyelashes',LASH,4);folds=Tubes('Upper eyelid crease',mat('Soft eyelid fold','#b78273',.65),5)
     wet=Tubes('Rose waterline',mat('Waterline · peach rose','#bd857b',.35),5);lashroot=Tubes('Upper lash root',LASH,5)
     eyemat=mat('Eyes · analytic vertex-color irises','#ccc4bf',.21)
-    p=eyemat.node_tree.nodes.get('Principled BSDF');p.inputs['Coat Weight'].default_value=.20;p.inputs['Coat Roughness'].default_value=.16
+    p=eyemat.node_tree.nodes.get('Principled BSDF');p.inputs['Coat Weight'].default_value=.07;p.inputs['Specular IOR Level'].default_value=.18;p.inputs['Coat Roughness'].default_value=.16
     a=eyemat.node_tree.nodes.new('ShaderNodeVertexColor');a.layer_name='Color';eyemat.node_tree.links.new(a.outputs['Color'],p.inputs['Base Color'])
     for s in [-1,1]:
         v=[];f=[];cs=[];nx=181;ny=65

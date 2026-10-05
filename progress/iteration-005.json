@@ -1,0 +1,7 @@
+{
+  "iteration": 5,
+  "quality": 62,
+  "title": "Eye color and profile recovered; crown transition needs repair",
+  "notes": "Brown irises are restored and the side profile has a more natural chin and shorter nose. Rear hair clears the shirt, but the underlayer exposes a crown seam and close fringe intersects the expanded face. Desktop, mobile, and orbit tests pass.",
+  "review_method": "Manual visual review of actual Eevee render; subjective, not measured likeness."
+}

@@ -1,7 +1,7 @@
 """Rebuild original geometry, render with Eevee, and export a browser model."""
 import bpy, os, sys, math, json, time
 from pathlib import Path
-from mathutils import Vector
+from mathutils import Vector,Matrix,Euler
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'src'))
 ARGS=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
 FAST='--fast' in ARGS
@@ -13,6 +13,17 @@ from clothing import make_clothing
 from face import make_face
 from hair import make_hair
 make_clothing()
+body_origin=Vector((0,0,2.4))
+bodyT=Matrix.Translation(Vector((-.07,0,0)))@Matrix.Translation(body_origin)@Euler((0,math.radians(-3.5),math.radians(-12))).to_matrix().to_4x4()@Matrix.Translation(-body_origin)
+bodyTi=bodyT.inverted()
+for ob in list(bpy.data.objects):
+    if ob.type!='MESH':continue
+    inverse=ob.matrix_world.inverted()
+    for vert in ob.data.vertices:
+        p=ob.matrix_world@vert.co;q=bodyT@p
+        if ob.name.startswith('Neck'):q=p.lerp(q,1-smooth((p.z-2.6)/.9))
+        vert.co=inverse@q
+    ob.data.update()
 old=set(bpy.data.objects)
 make_face()
 headparts=set(bpy.data.objects)-old
@@ -29,16 +40,20 @@ rot=pivot.rotation_euler.to_matrix();origin=Vector((0,0,3.08))
 for ob in hairparts:
     if ob.type=='MESH':
         for vert in ob.data.vertices:
-            p=vert.co.copy();weight=smooth((p.z-2.35)/1.15);vert.co=p.lerp(origin+rot@(p-origin),weight)
-            if vert.co.z<2.70:
+            p=vert.co.copy();weight=smooth((p.z-2.35)/1.15);vert.co=p.lerp(origin+rot@(Vector((p.x*1.04,p.y,p.z))-origin),weight)
+            q=bodyTi@vert.co
+            if q.z<2.70:
                 from clothing import W,D
-                w=interp(W,vert.co.z)+.035;d=interp(D,vert.co.z)+.035
-                q=sqrt((vert.co.x/w)**2+((vert.co.y-.06)/d)**2)
-                if .03<q<1:vert.co.x/=q;vert.co.y=.06+(vert.co.y-.06)/q
-
+                w=interp(W,q.z)+.035;d=interp(D,q.z)+.035
+                if abs(q.x)<w:
+                    back=.06+d*sqrt(max(0,1-(q.x/w)**2));front=.06-d*sqrt(max(0,1-(q.x/w)**2))
+                    rear=ob.name.startswith('Rear hair') or ob.name.startswith('Back hair')
+                    if rear:q.y=max(q.y,back)
+                    elif front<q.y<back:q.y=front if q.y<.06 else back
+                    vert.co=bodyT@q
 
 scene=bpy.context.scene
-scene.render.engine='BLENDER_EEVEE_NEXT';scene.eevee.taa_render_samples=16 if FAST else 64
+scene.render.engine='BLENDER_EEVEE_NEXT';scene.eevee.taa_render_samples=32 if FAST else 64
 scene.render.resolution_x=720 if FAST else 1200;scene.render.resolution_y=1080 if FAST else 1800;scene.render.resolution_percentage=100
 scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
 scene.render.film_transparent=False
@@ -69,7 +84,7 @@ if '--export' in ARGS:
     bpy.ops.object.select_all(action='DESELECT');selected=[]
     for o in list(bpy.data.objects):
         if o.get('export_web',False) and o.type in {'MESH','EMPTY'}:o.select_set(True);selected.append(o)
-    bpy.ops.export_scene.gltf(filepath=str(build/(STEM+'.next.glb')),export_format='GLB',use_selection=True,export_apply=True,export_yup=True,export_cameras=False,export_lights=False,export_extras=True,export_materials='EXPORT')
+    bpy.ops.export_scene.gltf(filepath=str(build/(STEM+'.next.glb')),export_format='GLB',use_selection=True,export_apply=True,export_yup=True,export_cameras=False,export_lights=False,export_extras=True,export_materials='EXPORT',export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=6,export_draco_position_quantization=14,export_draco_normal_quantization=10,export_draco_color_quantization=10)
     os.replace(build/(STEM+'.next.glb'),build/(STEM+'.glb'))
     print('GLB exported',len(selected),'objects',flush=True)
 print('BUILD completed',flush=True)

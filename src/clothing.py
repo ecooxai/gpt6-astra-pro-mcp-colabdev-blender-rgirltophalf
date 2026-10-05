@@ -61,13 +61,13 @@ def shirt():
         grid.append(row)
     panel('Standing collar band',grid,SHIRT,.012)
     for s in [-1,1]:
-        A=Vector((s*.31,-.285,3.16));B=Vector((s*.66,-.395,2.93));C=Vector((s*.50,-.735,2.40));E=Vector((s*.105,-.575,2.285))
+        A=Vector((s*.31,-.285,3.10));B=Vector((s*.68,-.325,2.90));C=Vector((s*.60,-.715,2.30));E=Vector((s*.10,-.595,2.53))
         grid=[]
         for j in range(28):
             v=j/27;row=[]
             for i in range(28):
                 u=i/27;p=(1-v)*((1-u)*A+u*B)+v*((1-u)*E+u*C)
-                p.y-=.105*sin(pi*u)*sin(pi*v);p.z+=.035*sin(pi*u)*sin(pi*v)
+                p.y-=.080*sin(pi*u)*sin(pi*v);p.y+=.022*sin(pi*v)*cos(pi*u);p.z+=.035*sin(pi*u)*sin(pi*v)
                 row.append(tuple(p))
             grid.append(row)
         panel('Folded pointed collar '+str(s),grid,SHIRT,.016)
@@ -87,7 +87,7 @@ def shirt():
         line('Placket stitch '+str(s),pts,.0025,SEAM,80)
     for z in [.40,1.07,1.74]:
         x=.035+.055*cos(z*1.45);make_button(x,cloth_y(x,z)-.047,z,.045)
-    make_button(.337,-.493,2.825,.039)
+    make_button(.34,-.635,2.71,.043)
 
 def make_button(x,y,z,r):
     bpy.ops.mesh.primitive_cylinder_add(vertices=48,radius=r,depth=.018,location=(x,y,z),rotation=(pi/2,0,0))

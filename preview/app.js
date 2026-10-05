@@ -90,7 +90,7 @@ async function poll() {
     $('#status').textContent = state.status;
     $('#updated').textContent = 'Updated ' + new Date(state.updated).toLocaleString();
     $('#progress').style.width = (state.progress || 9) + '%';
-    $('#live-state').textContent = state.complete ? 'Latest saved build' : 'Live build';
+    $('#live-state').textContent = state.delivery === 'snapshot' ? 'Published checkpoint' : state.running === false ? 'Saved checkpoint' : 'Live build';
     const paths = [];
     for (const type of ['blend', 'glb', 'archive']) {
       const link = $('#' + type + '-link');
@@ -100,6 +100,8 @@ async function poll() {
         link.setAttribute('aria-disabled', 'false');
         link.setAttribute('download', '');
         paths.push(buildPath + state.files[type]);
+        const location = $('#' + type + '-path');
+        if (location) location.textContent = buildPath + state.files[type];
       }
     }
     $('#file-paths').textContent = paths.join('\n\n') || 'Build files appear here after export.';
