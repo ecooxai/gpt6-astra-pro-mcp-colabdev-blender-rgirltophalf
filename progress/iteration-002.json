@@ -1,0 +1,7 @@
+{
+  "iteration": 2,
+  "quality": 58,
+  "title": "Improved eyes, proportions and cloth; scalp needs refinement",
+  "notes": "Eye placement, iris clipping, lower-face proportions and shoulder joins improved. Remaining problems: hard eyelid transitions, exposed smooth scalp, ribbon-like hair, low collar, and stylized likeness. Browser screenshot timed out during continuous 3D rendering.",
+  "review_method": "Manual visual review of actual Eevee render; subjective, not measured likeness."
+}

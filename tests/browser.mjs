@@ -16,7 +16,7 @@ let webgl=null;
 if(status.files?.glb){
  await page.getByRole('tab',{name:'Orbit 3D',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('#three canvas')&&!document.querySelector('#empty').checkVisibility(),{},{timeout:120000});
- await page.waitForTimeout(2000);await page.screenshot({path:'tests/orbit.png',fullPage:false});
+ await page.waitForTimeout(2000);await page.screenshot({path:'tests/orbit.png',fullPage:false,timeout:120000});
  webgl=await page.locator('#three canvas').evaluate(c=>({width:c.width,height:c.height}));
  await page.getByRole('button',{name:'Auto-rotate',exact:true}).click();await page.waitForTimeout(500);await page.getByRole('button',{name:'Stop rotation',exact:true}).click();
  await page.getByRole('button',{name:'Reset view',exact:true}).click();

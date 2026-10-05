@@ -3,7 +3,7 @@ from common import *
 def neck():
     v=[];f=[];N=96;M=50
     for j in range(M):
-        t=j/(M-1);z=2.16+1.44*t
+        t=j/(M-1);z=2.16+1.76*t
         w=interp([(2.16,.56),(2.55,.43),(3.05,.32),(3.38,.34),(3.6,.40)],z)
         d=interp([(2.16,.36),(2.55,.35),(3.05,.31),(3.38,.29),(3.6,.34)],z)
         for i in range(N):
@@ -14,24 +14,24 @@ def neck():
         for i in range(N):a=j*N+i;b=j*N+(i+1)%N;f.append((a,b,b+N,a+N))
     mesh('Neck · tapered continuous surface',v,f,SKIN)
 
-W=[(.03,1.36),(.6,1.34),(1.25,1.38),(1.85,1.42),(2.20,1.40),(2.38,1.36),(2.55,1.03),(2.74,.59),(2.94,.405)]
-D=[(.03,.68),(.7,.68),(1.4,.73),(1.95,.70),(2.25,.57),(2.55,.46),(2.74,.37),(2.94,.325)]
+W=[(.03,1.36),(.6,1.34),(1.25,1.38),(1.85,1.42),(2.20,1.40),(2.38,1.36),(2.70,1.03),(2.91,.59),(3.16,.405)]
+D=[(.03,.68),(.7,.68),(1.4,.73),(1.95,.70),(2.25,.57),(2.70,.46),(2.91,.37),(3.16,.325)]
 def cloth_y(x,z):
     w=interp(W,z);d=interp(D,z);y=.06-d*sqrt(max(.02,1-(x/w)**2))
-    folds=.013*sin(17*x+3.0*z)+.012*sin(24*z+8*x)*exp(-((abs(x)-.36)/.24)**2)
+    folds=.003*sin(17*x+3.0*z)+.003*sin(24*z+8*x)*exp(-((abs(x)-.36)/.24)**2)
     return y+folds
 
 def shirt():
     v=[];f=[];N=160;M=115
     for j in range(M):
-        basez=.03+2.91*j/(M-1);w=interp(W,basez);d=interp(D,basez)
+        basez=.03+3.13*j/(M-1);w=interp(W,basez);d=interp(D,basez)
         for i in range(N):
             a=2*pi*i/N;c=cos(a);x=w*sin(a);y=.06-d*c
-            z=basez-.71*(max(0,c)**3)*smooth((basez-2.24)/.7)
-            wave=.012*sin(18*x+3*z)+.014*sin(24*z+8*x)*exp(-((abs(x)-.36)/.24)**2)
+            z=basez-.91*(max(0,c)**3)*smooth((basez-2.35)/.81)
+            wave=.003*sin(18*x+3*z)+.003*sin(24*z+8*x)*exp(-((abs(x)-.36)/.24)**2)
             if c>0:y+=wave*c
             else:y+=.010*sin(14*x+1.3*z)*(-c)
-            y-=.016*sin(28*z-14*abs(x))*exp(-((z-1.80)/.24)**2)*max(0,c)
+            y-=.004*sin(28*z-14*abs(x))*exp(-((z-1.80)/.24)**2)*max(0,c)
             v.append((x,y,z))
     for j in range(M-1):
         for i in range(N):a=j*N+i;b=j*N+(i+1)%N;f.append((a,b,b+N,a+N))
@@ -39,12 +39,12 @@ def shirt():
     o=mesh('Shirt · tailored torso with open neckline',v,f,SHIRT)
     sol=o.modifiers.new('Poplin thickness','SOLIDIFY');sol.thickness=.012
     for s in [-1,1]:
-        pts=spline([(s*1.19,.065,2.34),(s*1.48,.055,2.15),(s*1.66,.04,1.60),(s*1.72,.015,.85),(s*1.72,.01,.03)],64)
+        pts=spline([(s*.85,.065,2.43),(s*1.20,.055,2.36),(s*1.50,.04,2.00),(s*1.67,.02,1.30),(s*1.70,.01,.03)],64)
         v=[];f=[];N=72
         for j,p in enumerate(pts):
-            t=j/(len(pts)-1);r=.37+.09*sin(pi*t*.87);tangent=(pts[min(j+1,len(pts)-1)]-pts[max(j-1,0)]).normalized();u=tangent.cross(Vector((0,1,0))).normalized();vv=tangent.cross(u).normalized()
+            t=j/(len(pts)-1);r=.22+.17*smooth(t/.28)-.04*smooth((t-.6)/.4);tangent=(pts[min(j+1,len(pts)-1)]-pts[max(j-1,0)]).normalized();u=tangent.cross(Vector((0,1,0))).normalized();vv=tangent.cross(u).normalized()
             for i in range(N):
-                a=2*pi*i/N;wrinkle=.014*sin(36*t+3*cos(a))+.007*sin(70*t+2*sin(a));rr=r+wrinkle
+                a=2*pi*i/N;wrinkle=.004*sin(24*t+3*cos(a))+.002*sin(51*t+2*sin(a));rr=r+wrinkle
                 v.append(tuple(p+u*cos(a)*rr+vv*sin(a)*rr*.90))
         for j in range(len(pts)-1):
             for i in range(N):a=j*N+i;b=j*N+(i+1)%N;f.append((a,b,b+N,a+N))
@@ -56,18 +56,18 @@ def shirt():
     for j in range(7):
         t=j/6;row=[]
         for i in range(90):
-            a=.60+(2*pi-1.2)*i/89;x=(.42+.027*t)*sin(a);y=.10-(.355+.025*t)*cos(a);z=2.76+.21*t
+            a=.95+(2*pi-1.9)*i/89;x=(.42+.027*t)*sin(a);y=.10-(.355+.025*t)*cos(a);z=2.98+.18*t
             row.append((x,y,z))
         grid.append(row)
     panel('Standing collar band',grid,SHIRT,.012)
     for s in [-1,1]:
-        A=Vector((s*.39,-.265,2.98));B=Vector((s*.68,-.395,2.71));C=Vector((s*.66,-.695,2.16));E=Vector((s*.105,-.575,2.235))
+        A=Vector((s*.31,-.285,3.16));B=Vector((s*.66,-.395,2.93));C=Vector((s*.50,-.735,2.40));E=Vector((s*.105,-.575,2.285))
         grid=[]
         for j in range(28):
             v=j/27;row=[]
             for i in range(28):
                 u=i/27;p=(1-v)*((1-u)*A+u*B)+v*((1-u)*E+u*C)
-                p.y-=.065*sin(pi*u)*sin(pi*v);p.z+=.035*sin(pi*u)*sin(pi*v)
+                p.y-=.105*sin(pi*u)*sin(pi*v);p.z+=.035*sin(pi*u)*sin(pi*v)
                 row.append(tuple(p))
             grid.append(row)
         panel('Folded pointed collar '+str(s),grid,SHIRT,.016)
@@ -87,7 +87,7 @@ def shirt():
         line('Placket stitch '+str(s),pts,.0025,SEAM,80)
     for z in [.40,1.07,1.74]:
         x=.035+.055*cos(z*1.45);make_button(x,cloth_y(x,z)-.047,z,.045)
-    make_button(.337,-.483,2.615,.039)
+    make_button(.337,-.493,2.825,.039)
 
 def make_button(x,y,z,r):
     bpy.ops.mesh.primitive_cylinder_add(vertices=48,radius=r,depth=.018,location=(x,y,z),rotation=(pi/2,0,0))

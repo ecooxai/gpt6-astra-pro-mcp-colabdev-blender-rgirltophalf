@@ -9,11 +9,12 @@ class HairStudio:
         self.count=0;self.locks=0
     def strand(self,pts,r=.0014,index=1,web=False):
         b=self.web[index] if web else self.fine[index];b.add(pts,r,True);self.count+=1
-    def lock(self,controls,width=.075,depth=.04,num=95,layer=1):
+    def lock(self,controls,width=.075,depth=.04,num=95,layer=1,solid=True):
         pts=spline(controls,56);rr=[]
         for j in range(len(pts)):
             t=j/(len(pts)-1);rr.append(width*(.47+.53*sin(pi*min(t*2,1)/2))*(1-.985*smooth((t-.68)/.32)))
-        self.base[layer%3].add(pts,width,False,depth/width,radii=rr);self.locks+=1
+        if solid:self.base[layer%3].add(pts,width,False,depth/width,radii=rr)
+        self.locks+=1
         for k in range(num):
             angle=2*pi*(k+.25)/num+RNG.uniform(-.06,.06);phase=RNG.random()*2*pi
             c=cos(angle);d=sin(angle);out=[];last=RNG.uniform(.90,1)
@@ -24,6 +25,9 @@ class HairStudio:
                 u.normalize();v=tangent.cross(u).normalized();rad=rr[a]*(1-q)+rr[a+1]*q
                 wave=.004*sin(t*18+phase)*sin(pi*t)+.0015*sin(t*41+phase*.7)
                 p+=u*(rad*c+wave)+v*((rad*depth/width+.0022)*d+.001*sin(t*25+phase))
+                if not solid and p.y<-.38 and 3.65<p.z<5.56:
+                    from face import face_y,WIDTH
+                    if abs(p.x)<interp(WIDTH,p.z)*.96:p.y=face_y(p.x,p.z)-.026-.005*sin(pi*t)
                 out.append(p)
             color=RNG.choices(range(5),[17,42,29,10,2])[0]
             self.strand(out,RNG.uniform(.00095,.0017),color,k%5==0)
@@ -35,30 +39,35 @@ def make_hair():
     H=HairStudio();v=[];f=[];N=180;M=70
     for j in range(M):
         for i in range(N):
-            th=2*pi*i/N;end=.99+1.50*((1-cos(th))/2)**.67;ph=.006+(end-.006)*j/(M-1)
+            th=2*pi*i/N;end=1.10+1.39*((1-cos(th))/2)**.67;ph=.006+(end-.006)*j/(M-1)
             v.append((.947*sin(ph)*sin(th),.12-.817*sin(ph)*cos(th),4.80+1.274*cos(ph)))
     for j in range(M-1):
         for i in range(N):a=j*N+i;b=j*N+(i+1)%N;f.append((a,b,b+N,a+N))
-    mesh('Hair scalp · asymmetrical forehead opening',v,f,HAIRS[0])
+    scalpmat=mat('Hair scalp · matte root density','#251b1d',.69)
+    mesh('Hair scalp · asymmetrical forehead opening',v,[tuple(reversed(q)) for q in f],scalpmat)
+    from hair_volume import back_shell
+    back_shell()
     for k in range(42):
         a=1.24+(2*pi-2.48)*(k+.35)/42;sw=sin(a);cw=cos(a);jitter=RNG.uniform(-.07,.07)
         ph=.30+RNG.uniform(0,.18)
         root=(.947*sin(ph)*sw,.12-.817*sin(ph)*cw,4.80+1.274*cos(ph))
-        controls=[root,(.77*sw,.12-.66*cw,5.55),(.96*sw,.12-.79*cw,4.88),(1.03*sw,.16-.81*cw,4.06),(1.02*sw,.20-.80*cw,3.32),(1.10*sw+.06*sin(a*5),.28-.63*cw,2.45),(1.17*sw+.09*sin(a*5),.30-.45*cw,1.48),(1.03*sw+.08*sin(a*6),.31-.35*cw,.66+jitter),(.94*sw,.26-.33*cw,.36+RNG.uniform(0,.35))]
-        H.lock(controls,.10,.068,85,0 if k%4==0 else 1)
+        controls=[root,(.77*sw,.12-.66*cw,5.55),(.96*sw,.12-.79*cw,4.88),(1.03*sw,.16-.81*cw,4.06),(1.02*sw,.20-.80*cw,3.32),(1.10*sw+.06*sin(a*5),.17-.72*cw,2.45),(1.17*sw+.09*sin(a*5),.15-.71*cw,1.48),(1.03*sw+.08*sin(a*6),.13-.68*cw,.66+jitter),(.94*sw,.14-.67*cw,.20+RNG.uniform(0,.35))]
+        H.lock(controls,.10,.031,85,0 if k%4==0 else 1,False)
     for k in range(12):
         t=k/11;dx=(t-.5)*.31;dep=(t-.5)*.115
         pts=[(.12-.14*t,-.01+.40*t,6.025-.06*t),(-.30-.08*t,-.43+.33*t,5.92-.04*t),(-.69-.09*t,-.58+.30*t,5.48),(-.90+dx*.23,-.24+.14*t,4.91),(-.946+dx*.30,.075+dep,4.38),(-.90+dx*.50,-.02+dep,3.66),(-.98+dx,-.38+dep,2.91),(-1.07+dx,-.64+dep,2.12),(-1.30+dx,-.77+dep,1.30),(-1.30+dx,-.74+dep,.78),(-.98+dx,-.65+dep,.35+.14*t)]
-        H.lock(pts,.092,.052,135,k%3)
+        pts=[(x+.035*sin(j*1.5+k*.85)*j/10,y+.02*sin(j+k*.7),z+(.13*sin(k*.8) if j>7 else 0)) for j,(x,y,z) in enumerate(pts)]
+        H.lock(pts,.084,.030,135,k%3)
     for k in range(16):
         t=k/15;dx=(t-.5)*.41;dep=(t-.5)*.15
-        pts=[(.15+.10*t,.045+.35*t,6.035-.035*t),(.54+.07*t,-.35+.28*t,5.86),(.84+dx*.35,-.40+dep,5.38),(1.00+dx*.38,-.26+dep,4.81),(1.04+dx*.40,-.36+dep,4.08),(.94+dx*.72,-.53+dep,3.36),(.98+dx,-.71+dep,2.60),(1.23+dx,-.82+dep,1.81),(1.39+dx,-.79+dep,1.18),(1.31+dx,-.74+dep,.68),(1.02+dx,-.68+dep,.35+.22*t)]
-        H.lock(pts,.10,.055,140,k%3)
-    H.lock([(.10,-.12,6.03),(-.11,-.61,5.63),(-.42,-.745,5.17),(-.63,-.73,4.62),(-.70,-.63,4.12),(-.75,-.47,3.64),(-.62,-.39,3.20)],.032,.016,95,1)
-    H.lock([(.14,-.15,6.035),(-.055,-.60,5.62),(-.27,-.75,5.20),(-.39,-.78,4.84)],.031,.014,82,1)
+        pts=[(.15+.10*t,.045+.35*t,6.035-.035*t),(.54+.07*t,-.35+.28*t,5.86),(.84+dx*.35,-.40+dep,5.38),(1.00+dx*.38,-.26+dep,4.81),(.96+dx*.40,-.40+dep,4.08),(.88+dx*.72,-.59+dep,3.36),(.98+dx,-.71+dep,2.60),(1.23+dx,-.82+dep,1.81),(1.39+dx,-.79+dep,1.18),(1.31+dx,-.74+dep,.68),(1.02+dx,-.68+dep,.35+.22*t)]
+        pts=[(x+.048*sin(j*1.5+k*.65)*j/10,y+.025*sin(j*.8+k*.7),z+(.14*sin(k*.8) if j>7 else 0)) for j,(x,y,z) in enumerate(pts)]
+        H.lock(pts,.09,.030,140,k%3)
+    H.lock([(.10,-.12,6.03),(-.11,-.61,5.63),(-.42,-.745,5.17),(-.63,-.73,4.62),(-.70,-.63,4.12),(-.75,-.47,3.64),(-.62,-.39,3.20)],.026,.012,95,1,False)
+    H.lock([(.14,-.15,6.035),(-.055,-.60,5.62),(-.27,-.75,5.20),(-.39,-.78,4.84)],.023,.009,65,1,False)
     for k in range(6):
         t=k/5;rootx=.16+.055*t
-        H.lock([(rootx,-.085,6.043),(.22+.025*t,-.58,5.65),(.19+.045*t,-.75,5.22),(.095+.062*t,-.797,4.88+.12*t)],.016+.002*sin(t*pi),.008,38,1)
+        H.lock([(rootx,-.085,6.043),(.22+.025*t,-.58,5.65),(.19+.045*t,-.75,5.22),(.095+.062*t,-.797,4.68+.14*t)],.020+.004*sin(t*pi),.006,29,1,False)
     for s in [-1,1]:
         for k in range(660):
             y0=RNG.uniform(-.47,.64);x0=.142+RNG.uniform(-.008,.008)
@@ -71,6 +80,22 @@ def make_hair():
                 q.normalize();off=.004+RNG.uniform(0,.001)
                 pts.append((q.x*(.956+off),.12+q.y*(.825+off),4.8+q.z*(1.281+off)))
             H.strand(pts,RNG.uniform(.001,.0017),RNG.choices(range(5),[15,42,30,11,2])[0],k%6==0)
+    # Fine leading-edge fibers fully cover the previously exposed forehead cap.
+    for side in [-1,1]:
+        for k in range(1200):
+            theta=side*(.015+1.86*(k+.35)/1200)
+            phend=1.10+1.39*((1-cos(theta))/2)**.67
+            y0=-.48+.82*(abs(theta)/1.88)**1.25+RNG.uniform(-.045,.045)
+            x0=.141+RNG.uniform(-.014,.014)
+            z0=4.8+1.282*sqrt(max(.01,1-(x0/.956)**2-((y0-.12)/.826)**2))
+            start=Vector((x0/.956,(y0-.12)/.826,(z0-4.8)/1.282)).normalized()
+            end=Vector((sin(phend)*sin(theta),-sin(phend)*cos(theta),cos(phend))).normalized()
+            ang=start.angle(end);pts=[]
+            for j in range(42):
+                t=j/41;q=(start*sin((1-t)*ang)+end*sin(t*ang))/max(.001,sin(ang));q.normalize()
+                off=.007+.002*sin(pi*t)+RNG.uniform(0,.001)
+                pts.append((q.x*(.954+off),.12+q.y*(.824+off),4.8+q.z*(1.280+off)))
+            H.strand(pts,RNG.uniform(.0010,.0016),RNG.choices(range(5),[17,43,28,10,2])[0],k%5==0)
     for s in [-1,1]:
         for k in range(65):
             t=RNG.random();rootz=5.0+.8*t;x=s*(.84+.09*(1-t));yy=RNG.uniform(-.4,.3);length=RNG.uniform(.3,1.3)

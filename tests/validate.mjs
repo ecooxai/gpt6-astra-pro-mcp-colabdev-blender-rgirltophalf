@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import validator from 'gltf-validator';
+const file='build/gpt6_astra_pro_mcp_colabdev_blender_rgirltophalf.glb';
+const data=fs.readFileSync(file);
+const report=await validator.validateBytes(new Uint8Array(data),{uri:file,maxIssues:100});
+report.source_sha256=crypto.createHash('sha256').update(data).digest('hex');
+report.source_bytes=data.length;
+fs.writeFileSync('tests/gltf-validation.json',JSON.stringify(report,null,2));
+console.log(JSON.stringify({errors:report.issues.numErrors,warnings:report.issues.numWarnings,infos:report.issues.numInfos,bytes:data.length}));
+if(report.issues.numErrors)process.exitCode=1;

@@ -6,3 +6,5 @@ preview/artifacts
 preview/reference
 *.blend1
 __pycache__/
+preview/history
+tests/*.png

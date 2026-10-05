@@ -1,0 +1,7 @@
+{
+  "iteration": 4,
+  "quality": 55,
+  "title": "Continuous face succeeded; eye reflections regressed",
+  "notes": "The eye holes and lips share continuous topology, but the new eye curvature washed out the iris reflections. Profile review exposed a receding chin and pointed nose; rear hair has repetitive ridges. This pass is not accepted as an improvement.",
+  "review_method": "Manual visual review of actual Eevee render; subjective, not measured likeness."
+}

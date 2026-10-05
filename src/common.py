@@ -35,6 +35,8 @@ def mat(name,color,rough=.45,metal=0,skin=False,cloth=False):
     if skin:
         p.inputs['Subsurface Weight'].default_value=.095; p.inputs['Subsurface Radius'].default_value=(1,.45,.30); p.inputs['Subsurface Scale'].default_value=.12
         a=n.new('ShaderNodeVertexColor'); a.layer_name='SkinTone'; l.new(a.outputs['Color'],p.inputs['Base Color'])
+        lipmask=n.new('ShaderNodeVertexColor'); lipmask.layer_name='LipMask'
+        rough=n.new('ShaderNodeMapRange');rough.inputs['From Min'].default_value=0;rough.inputs['From Max'].default_value=1;rough.inputs['To Min'].default_value=.46;rough.inputs['To Max'].default_value=.33;l.new(lipmask.outputs['Color'],rough.inputs['Value']);l.new(rough.outputs['Result'],p.inputs['Roughness'])
         tex=n.new('ShaderNodeTexNoise'); tex.inputs['Scale'].default_value=185; tex.inputs['Detail'].default_value=2.5; tex.inputs['Roughness'].default_value=.68
         bump=n.new('ShaderNodeBump'); bump.inputs['Strength'].default_value=.15; bump.inputs['Distance'].default_value=.006; l.new(tex.outputs['Fac'],bump.inputs['Height']); l.new(bump.outputs['Normal'],p.inputs['Normal'])
     if cloth:
@@ -43,7 +45,7 @@ def mat(name,color,rough=.45,metal=0,skin=False,cloth=False):
         bump=n.new('ShaderNodeBump'); bump.inputs['Strength'].default_value=.18; bump.inputs['Distance'].default_value=.004; l.new(tex.outputs['Fac'],bump.inputs['Height']);l.new(bump.outputs['Normal'],p.inputs['Normal'])
     return m
 SKIN=mat('Skin · peach ivory / procedural pores','#e7bba8',.44,skin=True)
-SKIN_BASE=rgba('#eac3ae'); BLUSH=rgba('#dba092'); EYEWARM=rgba('#bb897d')
+SKIN_BASE=rgba('#e6b6a6'); BLUSH=rgba('#dba092'); EYEWARM=rgba('#bb897d')
 LIP=mat('Lips · muted rose satin','#b86f73',.38)
 LIP.node_tree.nodes.get('Principled BSDF').inputs['Coat Weight'].default_value=.15
 SCLERA=mat('Sclera · warm ivory','#e4dcd5',.23)
@@ -57,13 +59,13 @@ SEAM=mat('Shirt · stitched edge','#d1d2dd',.70)
 BUTTON=mat('Buttons · warm nacre','#eee9dd',.30)
 HAIRS=[]
 for h in ['#24191a','#302022','#392629','#453033','#503836']:
-    m=mat('Hair · chestnut '+h,h,.34)
-    p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Anisotropic'].default_value=.65;p.inputs['Coat Weight'].default_value=.10
+    m=mat('Hair · chestnut '+h,h,.44)
+    p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Anisotropic'].default_value=.35;p.inputs['Coat Weight'].default_value=.015
     HAIRS.append(m)
 
 def skin_color(x,y,z):
     cheek=max(gauss(x,z,-.53,4.08,.28,.30),gauss(x,z,.53,4.08,.28,.30))*.24
-    shade=max(gauss(x,z,-.37,4.47,.30,.10),gauss(x,z,.37,4.47,.30,.10))*.09
+    shade=max(gauss(x,z,-.37,4.34,.30,.10),gauss(x,z,.37,4.34,.30,.10))*.09
     nose=gauss(x,z,0,4.03,.20,.18)*.10
     c=mix(SKIN_BASE,BLUSH,clamp(cheek+nose)); return mix(c,EYEWARM,shade)
 

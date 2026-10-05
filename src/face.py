@@ -1,23 +1,28 @@
 from common import *
-WIDTH=[(3.24,.04),(3.31,.20),(3.42,.37),(3.60,.55),(3.85,.70),(4.10,.80),(4.38,.84),(4.65,.85),(4.95,.83),(5.25,.78),(5.52,.64),(5.75,.43),(5.89,.05)]
-DEPTH=[(3.24,.14),(3.31,.25),(3.42,.35),(3.60,.46),(3.85,.56),(4.10,.65),(4.38,.68),(4.65,.69),(4.95,.70),(5.25,.70),(5.52,.61),(5.75,.41),(5.89,.04)]
+WIDTH=[(3.32,.04),(3.37,.22),(3.47,.39),(3.66,.57),(3.90,.72),(4.10,.80),(4.38,.84),(4.65,.85),(4.95,.83),(5.25,.78),(5.52,.64),(5.75,.43),(5.89,.05)]
+DEPTH=[(3.32,.14),(3.37,.25),(3.47,.36),(3.66,.47),(3.90,.57),(4.10,.65),(4.38,.68),(4.65,.69),(4.95,.70),(5.25,.70),(5.52,.61),(5.75,.41),(5.89,.04)]
+
+def center_y(z):
+    return interp([(3.325,-.38),(3.37,-.30),(3.47,-.19),(3.66,-.10),(3.90,0),(4.10,.055),(4.65,.065),(5.25,.088),(5.89,.09)],z)
 
 def face_y(x,z):
-    w=max(.01,interp(WIDTH,z));d=interp(DEPTH,z); q=clamp(x/w,-.9999,.9999)
-    cy=.055+.035*smooth((z-4.4)/1.1)
-    y=cy-d*sqrt(max(.001,1-q*q))
+    w=max(.01,interp(WIDTH,z));d=interp(DEPTH,z); q=clamp(x/w,-1,1)
+    cy=center_y(z)
+    base=cy-d*sqrt(max(0,1-q*q));y=base
     # Brow, orbit, cheek, nose bridge, alae, muzzle and chin are one continuous sculpted surface.
-    y-=.042*(gauss(x,z,-.37,4.92,.31,.14)+gauss(x,z,.37,4.92,.31,.14))
-    y+=.075*(gauss(x,z,-.37,4.64,.30,.17)+gauss(x,z,.37,4.64,.30,.17))
+    y-=.042*(gauss(x,z,-.355,4.72,.31,.14)+gauss(x,z,.355,4.72,.31,.14))
+    y+=.014*(gauss(x,z,-.355,4.50,.26,.16)+gauss(x,z,.355,4.50,.26,.16))
     y-=.065*(gauss(x,z,-.53,4.23,.26,.32)+gauss(x,z,.53,4.23,.26,.32))
-    y-=.088*gauss(x,z,0,4.48,.125,.43)
-    y-=.115*gauss(x,z,0,4.20,.105,.28)
-    y-=.245*gauss(x,z,0,4.065,.142,.145)
-    y-=.094*(gauss(x,z,-.142,4.005,.069,.088)+gauss(x,z,.142,4.005,.069,.088))
-    y+=.018*gauss(x,z,0,3.865,.034,.085)
-    y-=.090*gauss(x,z,0,3.72,.33,.23)
-    y-=.068*gauss(x,z,0,3.38,.26,.13)
-    return y
+    y-=.065*gauss(x,z,0,4.38,.125,.36)
+    y-=.055*gauss(x,z,0,4.20,.105,.28)
+    y-=.165*gauss(x,z,0,4.065,.158,.145)
+    y-=.065*(gauss(x,z,-.142,4.005,.069,.088)+gauss(x,z,.142,4.005,.069,.088))
+    y-=.045*gauss(x,z,0,3.979,.045,.055)
+    y+=.020*(gauss(x,z,-.105,3.988,.034,.019)+gauss(x,z,.105,3.988,.034,.019))
+    y+=.012*gauss(x,z,0,3.865,.034,.065)
+    y-=.090*gauss(x,z,0,3.77,.31,.22)
+    y-=.068*gauss(x,z,0,3.46,.27,.14)
+    return base+(y-base)*smooth(sqrt(max(0,1-q*q))/.35)
 
 def opening(s,a,expand=0):
     rx=.255+expand; u=cos(a); h=(.112 if sin(a)>=0 else .083)+expand*.68
@@ -29,15 +34,15 @@ def eye_y(x,z,s):
     return min(-.43-sqrt(max(.011,.282**2-dx*dx-dz*dz)),face_y(x,z)-.009)
 
 def is_eye(x,z):
-    for s in [-1,1]:
-        dx=(x-s*.365)/.255;dz=z-4.64-s*.025*dx;h=.112 if dz>0 else .083
-        if dx*dx+(dz/h)**2<1.03:return True
+    for sign in [-1,1]:
+        dx=(x-sign*.355)/.222;dz=z-4.50-sign*.018*dx;h=.104 if dz>0 else .063
+        if dx*dx+(dz/h)**2<1.06:return True
     return False
 
 def head():
     v=[];f=[];N=288;M=215
     for j in range(M):
-        z=3.245+(5.885-3.245)*j/(M-1);w=interp(WIDTH,z);d=interp(DEPTH,z)
+        z=3.325+(5.885-3.325)*j/(M-1);w=interp(WIDTH,z);d=interp(DEPTH,z)
         for i in range(N):
             t=2*pi*i/N;x=w*sin(t);y=face_y(x,z) if cos(t)>=0 else .06-d*cos(t)
             v.append((x,y,z))
@@ -130,7 +135,7 @@ def nose_mouth():
         nost.add(pts,.0058,True)
     nost.finish()
     # Two smoothly cambered lip surfaces, feathered into the surrounding skin.
-    def seam(x):return 3.699+.004*cos(x/.27*pi)-.012*exp(-(x/.085)**2)
+    def seam(x):return 3.749+.004*cos(x/.27*pi)-.006*exp(-(x/.085)**2)
     for upper in [True,False]:
         v=[];f=[];colors=[];nx=101;ny=13
         for j in range(ny):
@@ -138,9 +143,9 @@ def nose_mouth():
             for i in range(nx):
                 x=-.27+.54*i/(nx-1);q=x/.27;fade=max(0,1-q*q)**.7;mid=seam(x)
                 if upper:
-                    thick=(.063+.026*exp(-((abs(x)-.072)/.055)**2)-.009*exp(-(x/.030)**2))*fade
+                    thick=(.057+.020*exp(-((abs(x)-.072)/.055)**2)-.003*exp(-(x/.030)**2))*fade
                     z=mid+t*thick
-                else:z=mid-t*.090*fade
+                else:z=mid-t*.078*fade
                 y=face_y(x,z)-.004-(.019+.024*sin(pi*t))*fade*(1-t*.6)
                 v.append((x,y,z));lipc=mix(rgba('#ae6569') if upper else rgba('#ce8988'),skin_color(x,y,z),smooth((t-.66)/.34)*.75)
                 colors.append(lipc)
@@ -154,15 +159,15 @@ def nose_mouth():
     b=Tubes('Relaxed mouth line',MOUTH,6);b.add(pts,.0037,True);b.finish()
 
 def eyebrows():
-    hairs=Tubes('Eyebrows · individual swept hairs',LASH,4)
+    hairs=Tubes('Eyebrows · individual swept hairs',mat('Brows · soft warm brown','#715044',.62),4)
     for s in [-1,1]:
-        for k in range(190):
-            t=RNG.random();x=s*(.16+.51*t);z=4.932+.057*sin(pi*t)-.035*t+RNG.uniform(-.022,.018)*(1-t*.65)
-            length=RNG.uniform(.022,.055)*(1-t*.4);pts=[]
+        for k in range(400):
+            t=RNG.random();x=s*(.16+.51*t);z=4.710+.040*sin(pi*t)-.035*t+RNG.uniform(-.022,.018)*(1-t*.65)
+            length=RNG.uniform(.016,.038)*(1-t*.4);pts=[]
             for j in range(6):
                 a=j/5;xx=x+s*(.018+.025*t)*a;zz=z+length*sin(a*pi*.63)
                 pts.append((xx,face_y(xx,zz)-.010,zz))
-            hairs.add(pts,RNG.uniform(.0011,.002),True)
+            hairs.add(pts,RNG.uniform(.0008,.00135),True)
     hairs.finish()
 
 def ears():
@@ -176,5 +181,7 @@ def ears():
         sphere('Tragus '+str(s),(s*.839,-.153,4.31),(.043,.039,.065),SKIN)
 
 def make_face():
-    head();eyes();nose_mouth();eyebrows();ears()
+    from eye_revision import eyes as refined_eyes
+    from surface_face import head as unified_head, details
+    unified_head();refined_eyes();details();eyebrows();ears()
     print('FACE complete',flush=True)

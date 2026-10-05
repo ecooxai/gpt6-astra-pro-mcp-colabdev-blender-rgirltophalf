@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "gltf-validator": "^2.0.0-dev.3.10",
     "playwright": "^1.63.0"
   }
 }
