@@ -1,0 +1,8 @@
+build/
+logs/
+reference/
+node_modules/
+preview/artifacts
+preview/reference
+*.blend1
+__pycache__/
