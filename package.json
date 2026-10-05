@@ -1,0 +1,18 @@
+{
+  "name": "gpt6_astra_pro_mcp_colabdev_blender_rgirltophalf",
+  "version": "1.0.0",
+  "description": "New, from-scratch procedural Blender bust. No imported character meshes, textures, hair assets or reference projection.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

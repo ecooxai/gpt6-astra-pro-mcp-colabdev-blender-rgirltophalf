@@ -58,7 +58,7 @@ BUTTON=mat('Buttons · warm nacre','#eee9dd',.30)
 HAIRS=[]
 for h in ['#24191a','#302022','#392629','#453033','#503836']:
     m=mat('Hair · chestnut '+h,h,.34)
-    p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Anisotropic IOR Level'].default_value=.65;p.inputs['Coat Weight'].default_value=.10
+    p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Anisotropic'].default_value=.65;p.inputs['Coat Weight'].default_value=.10
     HAIRS.append(m)
 
 def skin_color(x,y,z):
